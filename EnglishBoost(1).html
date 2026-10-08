@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Philipp’s Englisch Lernen</title>
+<style>
+:root{
+  --purple:#6c4cff;
+  --purple-dark:#4c32c7;
+  --bg:#f5f3ff;
+  --card:#ffffff;
+  --text:#1e1b2e;
+  --muted:#716d82;
+  --green:#20a463;
+  --red:#e34b4b;
+  --border:#e6e2f4;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+header{
+  background:linear-gradient(135deg,#6c4cff,#8b6cff);
+  color:white;
+  padding:18px 20px;
+  position:sticky;
+  top:0;
+  z-index:10;
+  box-shadow:0 4px 16px rgba(50,35,130,.18);
+}
+.header-inner{
+  max-width:1050px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+}
+.logo{font-size:23px;font-weight:800}
+nav{display:flex;gap:7px;flex-wrap:wrap}
+nav button{
+  border:0;
+  background:rgba(255,255,255,.16);
+  color:white;
+  padding:9px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:700;
+}
+nav button.active,nav button:hover{background:white;color:var(--purple)}
+main{max-width:1050px;margin:0 auto;padding:28px 18px 60px}
+.page{display:none}
+.page.active{display:block}
+.hero{
+  background:linear-gradient(135deg,#ffffff,#eeeaff);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:30px;
+  margin-bottom:22px;
+}
+h1{margin:0 0 8px;font-size:34px}
+h2{margin-top:0}
+p{line-height:1.55}
+.muted{color:var(--muted)}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:15px;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 6px 18px rgba(50,35,130,.06);
+}
+.stat{font-size:30px;font-weight:800;color:var(--purple)}
+.btn{
+  border:0;
+  border-radius:11px;
+  padding:11px 15px;
+  cursor:pointer;
+  font-weight:700;
+  background:var(--purple);
+  color:white;
+}
+.btn:hover{background:var(--purple-dark)}
+.btn.secondary{background:#ece9ff;color:var(--purple-dark)}
+.btn.green{background:var(--green)}
+.btn.red{background:var(--red)}
+.btn.small{padding:7px 10px;font-size:13px}
+input,textarea,select{
+  width:100%;
+  padding:12px 13px;
+  border:1px solid #d9d4ea;
+  border-radius:11px;
+  font-size:16px;
+  outline:none;
+  background:white;
+}
+input:focus,textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(108,76,255,.12)}
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr auto;
+  gap:10px;
+  align-items:end;
+}
+label{font-weight:700;font-size:14px;display:block;margin-bottom:6px}
+.vocab-card{text-align:center;max-width:700px;margin:0 auto}
+.word{
+  font-size:42px;
+  font-weight:800;
+  margin:15px 0 8px;
+}
+.answer{
+  min-height:45px;
+  font-size:23px;
+  font-weight:700;
+  color:var(--purple);
+  margin:10px 0 20px;
+}
+.controls{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+.feedback{
+  margin:15px auto;
+  padding:12px;
+  border-radius:11px;
+  font-weight:700;
+  display:none;
+}
+.feedback.correct{display:block;background:#e7f8ef;color:#15784a}
+.feedback.wrong{display:block;background:#fff0f0;color:#b73535}
+.list{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.vocab-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  padding:13px 15px;
+  background:#fff;
+}
+.vocab-text{flex:1}
+.vocab-text strong{display:block}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.empty{
+  text-align:center;
+  padding:28px 15px;
+  color:var(--muted);
+  border:2px dashed #ddd7f2;
+  border-radius:15px;
+  margin-top:15px;
+}
+.progress{
+  height:12px;background:#ebe8f7;border-radius:20px;overflow:hidden;margin:10px 0 5px;
+}
+.progress > div{height:100%;background:linear-gradient(90deg,#6c4cff,#9b84ff);width:0%}
+.quiz-options{display:grid;gap:10px;margin-top:15px}
+.quiz-option{
+  text-align:left;background:white;border:2px solid var(--border);
+  padding:13px;border-radius:12px;cursor:pointer;font-weight:700;
+}
+.quiz-option:hover{border-color:var(--purple)}
+.quiz-option.correct{border-color:var(--green);background:#e7f8ef}
+.quiz-option.wrong{border-color:var(--red);background:#fff0f0}
+.notice{
+  background:#f0edff;border-left:4px solid var(--purple);
+  padding:12px 14px;border-radius:8px;margin:14px 0;
+}
+@media(max-width:750px){
+  .grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  h1{font-size:28px}
+  .word{font-size:34px}
+  .header-inner{align-items:flex-start;flex-direction:column}
+  nav{width:100%}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">📚 Philipp’s Englisch Lernen</div>
+    <nav>
+      <button class="nav-btn active" data-page="home">Start</button>
+      <button class="nav-btn" data-page="vocab">Vokabeln</button>
+      <button class="nav-btn" data-page="grammar">Grammatik</button>
+      <button class="nav-btn" data-page="quiz">Quiz</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="home" class="page active">
+    <div class="hero">
+      <h1>Englisch lernen – einfach & schnell 🇬🇧</h1>
+      <p class="muted">Deine eigene kleine Englisch-Lernwebsite. Du kannst deine Vokabeln selbst eingeben, speichern und direkt danach üben. 💾</p>
+      <button class="btn" onclick="showPage('vocab')">Meine Vokabeln öffnen →</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="stat" id="homeWords">0</div>
+        <div>Meine Vokabeln</div>
+      </div>
+      <div class="card">
+        <div class="stat" id="homeLearned">0</div>
+        <div>Gewusste Antworten</div>
+      </div>
+      <div class="card">
+        <div class="stat" id="homePoints">0</div>
+        <div>Quiz-Punkte</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:15px">
+      <h2>Dein Fortschritt</h2>
+      <div class="progress"><div id="homeProgressBar"></div></div>
+      <span class="muted" id="homeProgressText">Noch keine eigenen Vokabeln hinzugefügt.</span>
+    </div>
+  </section>
+
+  <section id="vocab" class="page">
+    <div class="hero">
+      <h1>📝 Meine Vokabeln</h1>
+      <p class="muted">Gib deine eigenen Vokabeln ein. Die Website speichert sie auf diesem Gerät.</p>
+    </div>
+
+    <div class="card">
+      <h2>➕ Vokabel hinzufügen</h2>
+      <div class="form-grid">
+        <div>
+          <label for="germanInput">Deutsch</label>
+          <input id="germanInput" placeholder="z. B. Haus">
+        </div>
+        <div>
+          <label for="englishInput">Englische Lösung</label>
+          <input id="englishInput" placeholder="z. B. house">
+        </div>
+        <button class="btn" id="addVocabBtn">Hinzufügen</button>
+      </div>
+      <div class="notice">💡 Mehrere richtige Lösungen kannst du mit Kommas trennen, z. B. <b>begin, start</b>.</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn green" id="saveVocabBtn">💾 Speichern</button>
+        <span class="muted" id="saveStatus">Deine Vokabeln werden zusätzlich automatisch gespeichert.</span>
+      </div>
+      <div id="vocabList" class="list"></div>
+    </div>
+
+    <div class="card" style="margin-top:15px">
+      <h2>🎯 Vokabeln abfragen</h2>
+      <p class="muted">Du bekommst das deutsche Wort und musst die englische Lösung selbst eintippen.</p>
+      <button class="btn green" onclick="startTypingPractice()">Jetzt abfragen</button>
+      <span class="muted" id="practiceInfo" style="margin-left:10px"></span>
+    </div>
+  </section>
+
+  <section id="practice" class="page">
+    <div class="hero">
+      <h1>🎯 Eigene Vokabeln abfragen</h1>
+      <p class="muted">Schreibe die englische Lösung selbst hinein.</p>
+    </div>
+    <div class="card vocab-card">
+      <div class="muted" id="practiceCounter"></div>
+      <div class="word" id="practiceWord">—</div>
+      <input id="practiceAnswer" placeholder="Englische Lösung eingeben" autocomplete="off">
+      <div id="practiceFeedback" class="feedback"></div>
+      <div class="controls">
+        <button class="btn" id="checkAnswerBtn">Antwort prüfen</button>
+        <button class="btn secondary" id="nextPracticeBtn">Nächstes Wort</button>
+        <button class="btn secondary" onclick="showPage('vocab')">Zurück</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="grammar" class="page">
+    <div class="hero">
+      <h1>📖 Grammatik</h1>
+      <p class="muted">Die wichtigsten Zeiten kurz erklärt.</p>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>Simple Present</h2><p>Für regelmäßige Handlungen und Fakten.</p><b>I play football.</b></div>
+      <div class="card"><h2>Present Progressive</h2><p>Für etwas, das gerade passiert.</p><b>I am playing football.</b></div>
+      <div class="card"><h2>Simple Past</h2><p>Für abgeschlossene Handlungen in der Vergangenheit.</p><b>I played football.</b></div>
+      <div class="card"><h2>Present Perfect</h2><p>Für Vergangenes mit Bezug zur Gegenwart.</p><b>I have played football.</b></div>
+    </div>
+  </section>
+
+  <section id="quiz" class="page">
+    <div class="hero">
+      <h1>🧠 Englisch-Quiz</h1>
+      <p class="muted">Teste dein Wissen mit Multiple Choice.</p>
+    </div>
+    <div class="card vocab-card">
+      <div class="muted" id="quizCounter"></div>
+      <h2 id="quizQuestion">Quiz wird geladen …</h2>
+      <div id="quizOptions" class="quiz-options"></div>
+      <div id="quizFeedback" class="feedback"></div>
+      <button class="btn" id="nextQuizBtn" style="margin-top:15px">Nächste Frage</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const starterVocab = [
+  {de:"Haus", en:"house"},
+  {de:"Schule", en:"school"},
+  {de:"Freund", en:"friend"},
+  {de:"Wasser", en:"water"},
+  {de:"Buch", en:"book"},
+  {de:"essen", en:"eat"},
+  {de:"laufen", en:"run"},
+  {de:"schnell", en:"fast"},
+  {de:"schön", en:"beautiful"},
+  {de:"beginnen", en:"begin"}
+];
+
+let customVocab = JSON.parse(localStorage.getItem("englishBoostVocab") || "[]");
+let learned = Number(localStorage.getItem("englishBoostLearned") || 0);
+let points = Number(localStorage.getItem("englishBoostPoints") || 0);
+
+let practiceIndex = 0;
+let practiceList = [];
+let practiceChecked = false;
+
+const quizData = [
+  {q:"Was bedeutet „Haus“?", options:["house","horse","homework","mouse"], a:"house"},
+  {q:"Was bedeutet „schnell“?", options:["slow","fast","strong","small"], a:"fast"},
+  {q:"Welche Form ist Simple Past?", options:["I play","I am playing","I played","I have played"], a:"I played"},
+  {q:"Welche Form ist Present Progressive?", options:["She runs","She ran","She has run","She is running"], a:"She is running"},
+  {q:"Was bedeutet „Freund“?", options:["friend","family","father","free"], a:"friend"}
+];
+
+let quizIndex = 0;
+let quizAnswered = false;
+
+function save(){
+  localStorage.setItem("englishBoostVocab", JSON.stringify(customVocab));
+  localStorage.setItem("englishBoostLearned", learned);
+  localStorage.setItem("englishBoostPoints", points);
+  updateStats();
+}
+
+function saveVocabManually(){
+  save();
+  const status = document.getElementById("saveStatus");
+  status.textContent = "✅ Gespeichert! Deine Vokabeln bleiben beim nächsten Öffnen erhalten.";
+  status.style.color = "var(--green)";
+  setTimeout(() => {
+    status.textContent = "Deine Vokabeln werden zusätzlich automatisch gespeichert.";
+    status.style.color = "";
+  }, 3500);
+}
+
+document.getElementById("saveVocabBtn").addEventListener("click", saveVocabManually);
+
+function showPage(page){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  const target=document.getElementById(page);
+  if(target) target.classList.add("active");
+
+  document.querySelectorAll(".nav-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.page===page);
+  });
+
+  if(page==="vocab") renderVocab();
+  if(page==="quiz") renderQuiz();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+document.querySelectorAll(".nav-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>showPage(btn.dataset.page));
+});
+
+function normalize(text){
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[.!?]+$/g,"")
+    .replace(/\s+/g," ");
+}
+
+function addVocab(){
+  const de=document.getElementById("germanInput").value.trim();
+  const en=document.getElementById("englishInput").value.trim();
+
+  if(!de || !en){
+    alert("Bitte Deutsch und die englische Lösung eingeben.");
+    return;
+  }
+
+  customVocab.push({de,en});
+  save();
+
+  document.getElementById("germanInput").value="";
+  document.getElementById("englishInput").value="";
+  document.getElementById("germanInput").focus();
+
+  renderVocab();
+}
+
+document.getElementById("addVocabBtn").addEventListener("click",addVocab);
+document.getElementById("englishInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter") addVocab();
+});
+
+function renderVocab(){
+  const list=document.getElementById("vocabList");
+  if(customVocab.length===0){
+    list.innerHTML='<div class="empty">Noch keine eigenen Vokabeln. Füge oben deine erste hinzu! 🚀</div>';
+    document.getElementById("practiceInfo").textContent="";
+    return;
+  }
+
+  list.innerHTML=customVocab.map((v,i)=>`
+    <div class="vocab-row">
+      <div class="vocab-text">
+        <strong>${escapeHtml(v.de)}</strong>
+        <span class="muted">→ ${escapeHtml(v.en)}</span>
+      </div>
+      <div class="actions">
+        <button class="btn secondary small" onclick="editVocab(${i})">Bearbeiten</button>
+        <button class="btn red small" onclick="deleteVocab(${i})">Löschen</button>
+      </div>
+    </div>
+  `).join("");
+
+  document.getElementById("practiceInfo").textContent =
+    `${customVocab.length} Vokabel${customVocab.length===1?"":"n"} bereit zum Üben.`;
+}
+
+function editVocab(i){
+  const v=customVocab[i];
+  const de=prompt("Deutsches Wort:",v.de);
+  if(de===null) return;
+  const en=prompt("Englische Lösung:",v.en);
+  if(en===null) return;
+
+  if(!de.trim() || !en.trim()){
+    alert("Beide Felder müssen ausgefüllt sein.");
+    return;
+  }
+
+  customVocab[i]={de:de.trim(),en:en.trim()};
+  save();
+  renderVocab();
+}
+
+function deleteVocab(i){
+  if(!confirm(`„${customVocab[i].de}“ wirklich löschen?`)) return;
+  customVocab.splice(i,1);
+  save();
+  renderVocab();
+}
+
+function escapeHtml(text){
+  return text.replace(/[&<>"']/g,m=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[m]));
+}
+
+function startTypingPractice(){
+  if(customVocab.length===0){
+    alert("Füge zuerst eigene Vokabeln hinzu.");
+    return;
+  }
+  practiceList=[...customVocab].sort(()=>Math.random()-0.5);
+  practiceIndex=0;
+  practiceChecked=false;
+  showPage("practice");
+  renderPractice();
+}
+
+function renderPractice(){
+  const v=practiceList[practiceIndex];
+  document.getElementById("practiceCounter").textContent =
+    `Vokabel ${practiceIndex+1} von ${practiceList.length}`;
+  document.getElementById("practiceWord").textContent=v.de;
+  const input=document.getElementById("practiceAnswer");
+  input.value="";
+  input.disabled=false;
+  input.focus();
+
+  const feedback=document.getElementById("practiceFeedback");
+  feedback.className="feedback";
+  feedback.textContent="";
+  practiceChecked=false;
+}
+
+function checkAnswer(){
+  if(!practiceList.length) return;
+  if(practiceChecked) return;
+
+  const v=practiceList[practiceIndex];
+  const given=normalize(document.getElementById("practiceAnswer").value);
+  const solutions=v.en.split(",").map(s=>normalize(s));
+  const feedback=document.getElementById("practiceFeedback");
+
+  if(solutions.includes(given)){
+    feedback.className="feedback correct";
+    feedback.textContent="✅ Richtig! Stark!";
+    learned++;
+    points+=10;
+  }else{
+    feedback.className="feedback wrong";
+    feedback.textContent=`❌ Nicht ganz. Lösung: ${v.en}`;
+  }
+
+  practiceChecked=true;
+  document.getElementById("practiceAnswer").disabled=true;
+  save();
+}
+
+function nextPractice(){
+  if(!practiceList.length) return;
+  practiceIndex++;
+  if(practiceIndex>=practiceList.length){
+    alert("🎉 Fertig! Du hast alle deine Vokabeln abgefragt.");
+    showPage("vocab");
+    return;
+  }
+  renderPractice();
+}
+
+document.getElementById("checkAnswerBtn").addEventListener("click",checkAnswer);
+document.getElementById("nextPracticeBtn").addEventListener("click",nextPractice);
+document.getElementById("practiceAnswer").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    if(!practiceChecked) checkAnswer();
+    else nextPractice();
+  }
+});
+
+function renderQuiz(){
+  const item=quizData[quizIndex];
+  document.getElementById("quizCounter").textContent=
+    `Frage ${quizIndex+1} von ${quizData.length}`;
+  document.getElementById("quizQuestion").textContent=item.q;
+  const options=document.getElementById("quizOptions");
+  options.innerHTML="";
+  quizAnswered=false;
+
+  const feedback=document.getElementById("quizFeedback");
+  feedback.className="feedback";
+  feedback.textContent="";
+
+  item.options.forEach(option=>{
+    const btn=document.createElement("button");
+    btn.className="quiz-option";
+    btn.textContent=option;
+    btn.onclick=()=>answerQuiz(btn,option,item.a);
+    options.appendChild(btn);
+  });
+}
+
+function answerQuiz(btn,option,answer){
+  if(quizAnswered) return;
+  quizAnswered=true;
+
+  const feedback=document.getElementById("quizFeedback");
+  if(option===answer){
+    btn.classList.add("correct");
+    feedback.className="feedback correct";
+    feedback.textContent="✅ Richtig! +10 Punkte";
+    points+=10;
+  }else{
+    btn.classList.add("wrong");
+    feedback.className="feedback wrong";
+    feedback.textContent=`❌ Die richtige Antwort ist: ${answer}`;
+    [...document.querySelectorAll(".quiz-option")].forEach(b=>{
+      if(b.textContent===answer) b.classList.add("correct");
+    });
+  }
+  save();
+}
+
+document.getElementById("nextQuizBtn").addEventListener("click",()=>{
+  quizIndex=(quizIndex+1)%quizData.length;
+  renderQuiz();
+});
+
+function updateStats(){
+  document.getElementById("homeWords").textContent=customVocab.length;
+  document.getElementById("homeLearned").textContent=learned;
+  document.getElementById("homePoints").textContent=points;
+
+  const progress=customVocab.length
+    ? Math.min(100,Math.round((learned/customVocab.length)*100))
+    : 0;
+
+  document.getElementById("homeProgressBar").style.width=progress+"%";
+  document.getElementById("homeProgressText").textContent=
+    customVocab.length
+      ? `${progress}% deiner eigenen Vokabeln wurden gewusst.`
+      : "Noch keine eigenen Vokabeln hinzugefügt.";
+}
+
+updateStats();
+renderVocab();
+renderQuiz();
+</script>
+</body>
+</html>
