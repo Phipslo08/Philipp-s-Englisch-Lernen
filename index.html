@@ -179,7 +179,10 @@ label{font-weight:700;font-size:14px;display:block;margin-bottom:6px}
   .header-inner{align-items:flex-start;flex-direction:column}
   nav{width:100%}
 }
-</style>
+
+.rank{font-size:25px;font-weight:800}.rankbar{font-size:13px;color:var(--muted);margin-top:7px}.level{border:2px solid var(--border);border-radius:15px;padding:16px;background:#fff;cursor:pointer}.level.locked{opacity:.5;cursor:not-allowed}.spick{background:#fffdf0;border:2px solid #f1dc77;border-radius:15px;padding:16px}.preview{max-width:100%;max-height:280px;border-radius:12px;margin:12px auto;display:none}.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#eeeaff;color:var(--purple-dark);font-weight:800;margin:3px}
+''</style>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -187,10 +190,10 @@ label{font-weight:700;font-size:14px;display:block;margin-bottom:6px}
   <div class="header-inner">
     <div class="logo">📚 Philipp’s Englisch Lernen</div>
     <nav>
-      <button class="nav-btn active" data-page="home">Start</button>
-      <button class="nav-btn" data-page="vocab">Vokabeln</button>
-      <button class="nav-btn" data-page="grammar">Grammatik</button>
-      <button class="nav-btn" data-page="quiz">Quiz</button>
+      <button type="button" class="nav-btn active" data-page="home" onclick="showPage('home')">Start</button>
+      <button type="button" class="nav-btn" data-page="vocab" onclick="showPage('vocab')">Vokabeln</button>
+      <button type="button" class="nav-btn" data-page="grammar" onclick="showPage('grammar')">Grammatik</button>
+      <button type="button" class="nav-btn" data-page="quiz" onclick="showPage('quiz')">Tests</button>
     </nav>
   </div>
 </header>
@@ -214,96 +217,88 @@ label{font-weight:700;font-size:14px;display:block;margin-bottom:6px}
       </div>
       <div class="card">
         <div class="stat" id="homePoints">0</div>
-        <div>Quiz-Punkte</div>
+        <div>XP</div>
       </div>
     </div>
 
-    <div class="card" style="margin-top:15px">
-      <h2>Dein Fortschritt</h2>
-      <div class="progress"><div id="homeProgressBar"></div></div>
-      <span class="muted" id="homeProgressText">Noch keine eigenen Vokabeln hinzugefügt.</span>
+    <div class="card" style="margin-top:15px;text-align:center">
+      <h2>🏆 Dein Rang</h2>
+      <div id="homeRank" class="rank" style="font-size:34px">Bronze</div>
+      <div id="homeXP" class="rankbar">0 XP</div>
+      <div class="progress" style="margin-top:14px"><div id="homeRankProgress"></div></div>
+      <span class="muted" id="homeRankNext">Noch 500 XP bis Silber</span>
     </div>
   </section>
 
   <section id="vocab" class="page">
     <div class="hero">
-      <h1>📝 Meine Vokabeln</h1>
-      <p class="muted">Gib deine eigenen Vokabeln ein. Die Website speichert sie auf diesem Gerät.</p>
+      <h1>📚 Meine Vokabeln</h1>
+      <p class="muted">Trage eigene Vokabeln ein und übe sie jederzeit.</p>
+      <button class="btn green" id="startVocabTestBtn" type="button">📝 Vokabelprüfung starten · 50 XP</button>
     </div>
-
     <div class="card">
       <h2>➕ Vokabel hinzufügen</h2>
       <div class="form-grid">
-        <div>
-          <label for="germanInput">Deutsch</label>
-          <input id="germanInput" placeholder="z. B. Haus">
+        <div><label for="germanInput">Deutsch</label><input id="germanInput" placeholder="z. B. Haus"></div>
+        <div><label for="englishInput">Englische Lösung</label><input id="englishInput" placeholder="z. B. house"></div>
+        <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
+          <button class="btn" id="addVocabBtn" type="button">Hinzufügen</button>
+          <button class="btn secondary" id="cameraBtn" type="button" title="Vokabelzettel fotografieren">📷</button>
+          <input id="imageInput" type="file" accept="image/*" capture="environment" style="display:none">
         </div>
-        <div>
-          <label for="englishInput">Englische Lösung</label>
-          <input id="englishInput" placeholder="z. B. house">
-        </div>
-        <button class="btn" id="addVocabBtn">Hinzufügen</button>
       </div>
-      <div class="notice">💡 Mehrere richtige Lösungen kannst du mit Kommas trennen, z. B. <b>begin, start</b>.</div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px">
-        <button class="btn green" id="saveVocabBtn">💾 Speichern</button>
-        <span class="muted" id="saveStatus">Deine Vokabeln werden zusätzlich automatisch gespeichert.</span>
+      <div class="notice">💡 Mehrere richtige Lösungen mit Kommas trennen. Mit 📷 kannst du einen Vokabelzettel fotografieren.</div>
+      <div id="cameraBox" class="card" style="display:none;margin-top:12px;background:#faf9ff">
+        <h3>📷 Vokabelzettel fotografieren</h3><img id="preview" class="preview" alt="Foto-Vorschau">
+        <div class="controls"><button class="btn green" type="button" onclick="runOCR()">🔎 Vokabeln erkennen</button><button class="btn secondary" type="button" onclick="document.getElementById('cameraBox').style.display='none'">Schließen</button></div>
+        <p class="muted" id="ocrStatus">Wähle ein Foto aus oder nimm am Handy eines auf. Am besten steht „Haus – house“ pro Zeile.</p>
+        <textarea id="ocrText" rows="5" placeholder="Erkannter Text …" style="width:100%;margin-top:8px"></textarea>
+        <button class="btn" type="button" onclick="importOCR()">➕ Erkannte Vokabeln übernehmen</button>
       </div>
-      <div id="vocabList" class="list"></div>
     </div>
-
     <div class="card" style="margin-top:15px">
-      <h2>🎯 Vokabeln abfragen</h2>
-      <p class="muted">Du bekommst das deutsche Wort und musst die englische Lösung selbst eintippen.</p>
-      <button class="btn green" onclick="startTypingPractice()">Jetzt abfragen</button>
-      <span class="muted" id="practiceInfo" style="margin-left:10px"></span>
-    </div>
-  </section>
-
-  <section id="practice" class="page">
-    <div class="hero">
-      <h1>🎯 Eigene Vokabeln abfragen</h1>
-      <p class="muted">Schreibe die englische Lösung selbst hinein.</p>
-    </div>
-    <div class="card vocab-card">
-      <div class="muted" id="practiceCounter"></div>
-      <div class="word" id="practiceWord">—</div>
-      <input id="practiceAnswer" placeholder="Englische Lösung eingeben" autocomplete="off">
-      <div id="practiceFeedback" class="feedback"></div>
-      <div class="controls">
-        <button class="btn" id="checkAnswerBtn">Antwort prüfen</button>
-        <button class="btn secondary" id="nextPracticeBtn">Nächstes Wort</button>
-        <button class="btn secondary" onclick="showPage('vocab')">Zurück</button>
-      </div>
+      <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><h2>Deine Liste</h2><button class="btn secondary" id="saveVocabBtn" type="button">💾 Speichern</button></div>
+      <p class="muted" id="saveStatus">Deine Vokabeln werden automatisch gespeichert.</p>
+      <p class="muted" id="practiceInfo"></p>
+      <div id="vocabList" class="list"></div>
     </div>
   </section>
 
   <section id="grammar" class="page">
     <div class="hero">
       <h1>📖 Grammatik</h1>
-      <p class="muted">Die wichtigsten Zeiten kurz erklärt.</p>
+      <p class="muted">9 Grammatik-Level mit vielen Fragen. Jede Runde wählt 8 zufällige Fragen aus – ohne Wiederholungen innerhalb einer Runde.</p>
+      <button class="btn green" id="startGrammarTestBtn" type="button">📝 Test durchführen</button>
     </div>
-    <div class="grid">
-      <div class="card"><h2>Simple Present</h2><p>Für regelmäßige Handlungen und Fakten.</p><b>I play football.</b></div>
-      <div class="card"><h2>Present Progressive</h2><p>Für etwas, das gerade passiert.</p><b>I am playing football.</b></div>
-      <div class="card"><h2>Simple Past</h2><p>Für abgeschlossene Handlungen in der Vergangenheit.</p><b>I played football.</b></div>
-      <div class="card"><h2>Present Perfect</h2><p>Für Vergangenes mit Bezug zur Gegenwart.</p><b>I have played football.</b></div>
-    </div>
+    <div class="notice">Die Übersicht orientiert sich am aktuellen österreichischen Mittelschul-Lehrplan. Der Lehrplan betont den funktionalen Gebrauch von Zeit und Aspekt sowie Gegenwart, Vergangenheit und Zukunft.</div>
+    <div id="grammarLevels" class="grid" style="margin-top:15px"></div>
+    <div id="grammarStudy"></div>
   </section>
 
   <section id="quiz" class="page">
     <div class="hero">
-      <h1>🧠 Englisch-Quiz</h1>
-      <p class="muted">Teste dein Wissen mit Multiple Choice.</p>
+      <h1>🧠 Gemischter Test</h1>
+      <p class="muted">Vokabeln und Grammatik gemischt. Für eine abgeschlossene Prüfung bekommst du 100 XP.</p>
+      <button class="btn green" id="startMixedBtn">🚀 Test starten</button>
     </div>
-    <div class="card vocab-card">
-      <div class="muted" id="quizCounter"></div>
-      <h2 id="quizQuestion">Quiz wird geladen …</h2>
-      <div id="quizOptions" class="quiz-options"></div>
-      <div id="quizFeedback" class="feedback"></div>
-      <button class="btn" id="nextQuizBtn" style="margin-top:15px">Nächste Frage</button>
+    <div id="mixedIntro" class="card">
+      <h2>Was kommt dran?</h2>
+      <p>Eigene Vokabeln und Grammatikfragen aus deinen gelernten Themen.</p>
+      <span class="badge">🔥 100 XP</span>
+    </div>
+    <div id="mixedTestBox" class="card vocab-card" style="display:none;margin-top:15px">
+      <div class="muted" id="mixedCounter"></div>
+      <h2 id="mixedQuestion"></h2>
+      <div id="mixedOptions" class="quiz-options"></div>
+      <input id="mixedAnswer" placeholder="Englische Lösung" style="display:none">
+      <div id="mixedFeedback" class="feedback"></div>
+      <button class="btn" id="nextMixedBtn" style="margin-top:15px">Nächste Frage</button>
     </div>
   </section>
+
+<section id="vocabTest" class="page"><div class="hero"><h1>🎯 Vokabel-Test</h1><p id="vtCounter" class="muted"></p></div><div class="card vocab-card"><div class="word" id="vtWord">—</div><input id="vtAnswer" placeholder="Englische Lösung"><div id="vtFeedback" class="feedback"></div><div class="controls"><button class="btn" onclick="checkVocabAnswer()">Prüfen</button><button class="btn secondary" onclick="nextVocabQuestion()">Nächstes Wort</button></div></div></section>
+<section id="grammarTest" class="page"><div class="hero"><h1>🧠 Grammatik-Test</h1><p id="gtCounter" class="muted"></p></div><div class="card vocab-card"><h2 id="gtQuestion"></h2><div id="gtOptions" class="quiz-options"></div><div id="gtFeedback" class="feedback"></div><button class="btn" onclick="nextGrammarQuestion()">Nächste Frage</button></div></section>
+
 </main>
 
 <script>
@@ -395,13 +390,12 @@ function addVocab(){
   }
 
   customVocab.push({de,en});
-  save();
+  try { save(); } catch (error) { console.error("Speichern/Statistik:", error); }
+  renderVocab();
 
   document.getElementById("germanInput").value="";
   document.getElementById("englishInput").value="";
   document.getElementById("germanInput").focus();
-
-  renderVocab();
 }
 
 document.getElementById("addVocabBtn").addEventListener("click",addVocab);
@@ -527,9 +521,9 @@ function nextPractice(){
   renderPractice();
 }
 
-document.getElementById("checkAnswerBtn").addEventListener("click",checkAnswer);
-document.getElementById("nextPracticeBtn").addEventListener("click",nextPractice);
-document.getElementById("practiceAnswer").addEventListener("keydown",e=>{
+const oldCheckAnswerBtn=document.getElementById("checkAnswerBtn"); if(oldCheckAnswerBtn) oldCheckAnswerBtn.addEventListener("click",checkAnswer);
+const oldNextPracticeBtn=document.getElementById("nextPracticeBtn"); if(oldNextPracticeBtn) oldNextPracticeBtn.addEventListener("click",nextPractice);
+const oldPracticeAnswer=document.getElementById("practiceAnswer"); if(oldPracticeAnswer) oldPracticeAnswer.addEventListener("keydown",e=>{
   if(e.key==="Enter"){
     if(!practiceChecked) checkAnswer();
     else nextPractice();
@@ -579,30 +573,173 @@ function answerQuiz(btn,option,answer){
   save();
 }
 
-document.getElementById("nextQuizBtn").addEventListener("click",()=>{
+const oldNextQuizBtn=document.getElementById("nextQuizBtn"); if(oldNextQuizBtn) oldNextQuizBtn.addEventListener("click",()=>{
   quizIndex=(quizIndex+1)%quizData.length;
   renderQuiz();
 });
 
 function updateStats(){
-  document.getElementById("homeWords").textContent=customVocab.length;
-  document.getElementById("homeLearned").textContent=learned;
-  document.getElementById("homePoints").textContent=points;
-
-  const progress=customVocab.length
-    ? Math.min(100,Math.round((learned/customVocab.length)*100))
-    : 0;
-
-  document.getElementById("homeProgressBar").style.width=progress+"%";
-  document.getElementById("homeProgressText").textContent=
-    customVocab.length
-      ? `${progress}% deiner eigenen Vokabeln wurden gewusst.`
-      : "Noch keine eigenen Vokabeln hinzugefügt.";
+  const words=document.getElementById("homeWords");
+  const learnedEl=document.getElementById("homeLearned");
+  const pointsEl=document.getElementById("homePoints");
+  if(words) words.textContent=customVocab.length;
+  if(learnedEl) learnedEl.textContent=learned;
+  if(pointsEl) pointsEl.textContent=points;
+  if(typeof updateRankUI === "function") updateRankUI();
 }
 
-updateStats();
-renderVocab();
-renderQuiz();
+// Initialisierung erfolgt gesammelt am Ende, nachdem Rang-Daten definiert sind.
+
+// Lernsystem 3.0
+const RANKS=[{name:'Bronze',min:0},{name:'Silver',min:500},{name:'Gold',min:1000},{name:'Platinum',min:2000},{name:'Diamond',min:4000},{name:'Master',min:7500},{name:'Champion',min:12000}];
+function getRank(){let c=RANKS[0];for(const r of RANKS)if(points>=r.min)c=r;return c;}
+function updateRankUI(){const r=getRank(),hr=document.getElementById('homeRank'),hx=document.getElementById('homeXP'),bar=document.getElementById('homeRankProgress'),nx=document.getElementById('homeRankNext');if(hr)hr.textContent=r.name;if(hx)hx.textContent=points+' XP';const i=RANKS.findIndex(x=>x.name===r.name);if(i<RANKS.length-1){const n=RANKS[i+1],pct=Math.min(100,Math.max(0,Math.round((points-r.min)/(n.min-r.min)*100)));if(bar)bar.style.width=pct+'%';if(nx)nx.textContent=`Noch ${Math.max(0,n.min-points)} XP bis ${n.name}`;}else{if(bar)bar.style.width='100%';if(nx)nx.textContent='🏆 Höchster Rang erreicht!';}}
+function awardTestXP(x){points+=x;save();updateRankUI();}
+
+// Vokabelprüfung: genau 50 XP für das Abschließen der Prüfung
+let vt=[],vti=0,vtScore=0,vtChecked=false,vtFinished=false;
+function startVocabTest(){const source=customVocab.length?customVocab:starterVocab;if(!customVocab.length){const ok=confirm('Du hast noch keine eigenen Vokabeln. Soll die Prüfung mit den Beispiel-Vokabeln starten?');if(!ok)return;}vt=[...source].sort(()=>Math.random()-.5);vti=0;vtScore=0;vtChecked=false;vtFinished=false;showPage('vocabTest');renderVT();}
+function renderVT(){const v=vt[vti];document.getElementById('vtCounter').textContent=`Frage ${vti+1} von ${vt.length} · Punkte: ${vtScore}/${vti}`;document.getElementById('vtWord').textContent=v.de;const i=document.getElementById('vtAnswer');i.value='';i.disabled=false;i.focus();const f=document.getElementById('vtFeedback');f.className='feedback';f.textContent='';vtChecked=false;}
+function checkVocabAnswer(){if(vtChecked)return;const v=vt[vti],ok=v.en.split(',').map(normalize).includes(normalize(document.getElementById('vtAnswer').value));vtChecked=true;document.getElementById('vtAnswer').disabled=true;const f=document.getElementById('vtFeedback');if(ok){vtScore++;learned++;f.className='feedback correct';f.textContent='✅ Richtig!';}else{f.className='feedback wrong';f.textContent='❌ Falsch. Lösung: '+v.en;}save();document.getElementById('vtCounter').textContent=`Frage ${vti+1} von ${vt.length} · Punkte: ${vtScore}/${vti+1}`;}
+function nextVocabQuestion(){if(vtFinished)return;if(!vtChecked){checkVocabAnswer();return;}vti++;if(vti>=vt.length){vtFinished=true;const pct=Math.round(vtScore/vt.length*100);awardTestXP(50);const f=document.getElementById('vtFeedback');f.className='feedback correct';f.innerHTML=`🏁 Prüfung fertig! <b>${vtScore} / ${vt.length} Punkte</b> · ${pct}%<br>⭐ +50 XP für die Prüfung · Rang: ${getRank().name}`;document.getElementById('vtAnswer').disabled=true;return;}renderVT();}
+
+// Grammatik bis 4. Klasse: Zeitformen + wichtige Zukunftsformen
+const grammarLevels=[
+{name:'1. Simple Present',desc:'Gewohnheiten, Fakten und regelmäßige Handlungen',sheet:'I/you/we/they + Verb. Bei he/she/it meist + s. Fragen: do/does. Verneinung: don’t/doesn’t.',qs:[['She ___ to school every day.',['go','goes','going','went'],'goes'],['___ you play football?',['Do','Does','Did','Are'],'Do'],['He ___ like milk.',["don't","doesn't","isn't","not"],"doesn't"]]},
+{name:'2. Present Progressive',desc:'Handlungen, die gerade passieren',sheet:'am/is/are + Verb-ing. Signalwörter: now, at the moment.',qs:[['I ___ watching TV now.',['am','is','are','be'],'am'],['They are ___ football.',['play','played','playing','plays'],'playing'],['She ___ sleeping now.',['am','is','are','be'],'is']]},
+{name:'3. Simple Past',desc:'Abgeschlossene Handlungen in der Vergangenheit',sheet:'Regelmäßige Verben: -ed. Unregelmäßige Verben haben eigene Formen. Fragen oft mit did.',qs:[['Yesterday I ___ football.',['play','played','playing','plays'],'played'],['Did you ___ the book?',['read','reads','reading','readed'],'read'],['He ___ home last night.',['went','go','goes','going'],'went']]},
+{name:'4. Past Progressive',desc:'Etwas war zu einem Zeitpunkt in der Vergangenheit gerade im Gang',sheet:'was/were + Verb-ing. Beispiel: I was sleeping at 10 pm.',qs:[['I ___ sleeping at 10 pm.',['was','were','am','did'],'was'],['They ___ playing when I called.',['was','were','are','did'],'were'],['She was ___ TV.',['watch','watched','watching','watches'],'watching']]},
+{name:'5. Present Perfect',desc:'Vergangenheit mit Verbindung zur Gegenwart',sheet:'have/has + 3. Form. Typisch: already, just, ever, never, yet.',qs:[['I ___ finished my homework.',['has','have','am','did'],'have'],['She has ___ the film.',['see','saw','seen','seeing'],'seen'],['Have you ___ been to London?',['ever','yesterday','last','ago'],'ever']]},
+{name:'6. Past Perfect',desc:'Etwas geschah vor einem anderen Zeitpunkt in der Vergangenheit',sheet:'had + 3. Form. Beispiel: I had eaten before I went home.',qs:[['I ___ already eaten before they arrived.',['have','has','had','did'],'had'],['She had ___ the book before class.',['read','reads','reading','reader'],'read'],['They ___ left before we came.',['had','have','has','were'],'had']]},
+{name:'7. will-Future',desc:'Zukünftige Aussagen, spontane Entscheidungen und Vorhersagen',sheet:'will + Grundform. Verneinung: will not / won’t.',qs:[['I think it ___ rain tomorrow.',['will','is','did','has'],'will'],['I ___ help you!',['will','am','was','have'],'will'],['She won’t ___ late.',['be','is','was','being'],'be']]},
+{name:'8. going-to Future',desc:'Pläne und Vorhaben sowie erkennbare zukünftige Ereignisse',sheet:'am/is/are + going to + Grundform.',qs:[['We are ___ to visit London.',['go','going','went','gone'],'going'],['He is going to ___ football.',['plays','played','play','playing'],'play'],['I ___ going to study tonight.',['am','is','are','be'],'am']]},
+{name:'9. Mixed Challenge',desc:'Die wichtigsten Zeitformen gemischt',sheet:'Achte auf Signalwörter und den Zusammenhang: every day, now, yesterday, already, tomorrow usw.',qs:[['She ___ here every Monday.',['comes','is coming','came','has come'],'comes'],['Look! They ___ running.',['are','were','have','will'],'are'],['We ___ to Vienna last week.',['go','went','have gone','are going'],'went'],['I have ___ my homework.',['do','did','done','doing'],'done']]}
+ ];
+// Zusätzliche Fragen pro Level. Pro Runde werden Fragen zufällig ausgewählt und gemischt.
+const extraGrammarQuestions = [
+[
+['My brother ___ video games every evening.',['play','plays','playing','played'],'plays'],
+['She ___ breakfast at seven.',['have','has','having','had'],'has'],
+['They ___ live in London.',['doesn’t','don’t','aren’t','isn’t'],'don’t'],
+['___ your sister speak English?',['Do','Does','Is','Has'],'Does'],
+['Water ___ at 100°C.',['boil','boils','boiling','boiled'],'boils'],
+['Tom and Ben ___ to school by bus.',['goes','go','going','went'],'go'],
+['He usually ___ his homework after school.',['do','does','doing','did'],'does']
+],
+[
+['Listen! The baby ___.',['cries','is crying','cry','cried'],'is crying'],
+['We ___ dinner at the moment.',['have','has','are having','had'],'are having'],
+['I am ___ an email right now.',['write','writes','wrote','writing'],'writing'],
+['What ___ you doing now?',['do','are','is','did'],'are'],
+['The dogs ___ in the garden right now.',['run','runs','are running','ran'],'are running'],
+['She isn’t ___ today.',['work','works','working','worked'],'working'],
+['Look! It ___ outside.',['snows','snowed','is snowing','snow'],'is snowing']
+],
+[
+['Last weekend we ___ our grandparents.',['visit','visited','visiting','visits'],'visited'],
+['She ___ a new phone yesterday.',['buy','buys','bought','buying'],'bought'],
+['They didn’t ___ the answer.',['knew','know','knows','knowing'],'know'],
+['___ he call you last night?',['Does','Was','Did','Has'],'Did'],
+['I ___ my keys two hours ago.',['lose','lost','losing','loses'],'lost'],
+['We ___ a great film on Friday.',['see','saw','seen','seeing'],'saw'],
+['He ___ to school because he was ill.',['didn’t go','doesn’t went','not went','didn’t went'],'didn’t go']
+],
+[
+['At 8 pm yesterday, we ___ dinner.',['were having','was having','are having','have'],'were having'],
+['While I was reading, my phone ___.',['rings','rang','was ring','ringing'],'rang'],
+['She ___ when the teacher came in.',['studied','were studying','was studying','studies'],'was studying'],
+['What ___ you doing at six o’clock?',['was','were','did','are'],'were'],
+['It ___ raining when we left.',['were','is','was','did'],'was'],
+['The children were ___ in the park.',['play','played','playing','plays'],'playing'],
+['I was sleeping while my brother ___ TV.',['watched','was watching','watches','watch'],'was watching']
+],
+[
+['We have ___ our lunch already.',['eat','ate','eaten','eating'],'eaten'],
+['He has never ___ sushi.',['try','tried','trying','tries'],'tried'],
+['___ you ever visited Scotland?',['Did','Have','Has','Were'],'Have'],
+['She hasn’t finished her project ___.',['already','yet','last','ago'],'yet'],
+['They have lived here ___ 2022.',['for','since','during','from'],'since'],
+['I have known him ___ three years.',['since','for','ago','at'],'for'],
+['My parents have just ___.',['arrive','arrived','arriving','arrives'],'arrived']
+],
+[
+['When we arrived, the film had already ___.',['start','started','starting','starts'],'started'],
+['She was tired because she ___ badly.',['had slept','has slept','sleep','was sleep'],'had slept'],
+['After he had eaten, he ___ his homework.',['does','did','has done','doing'],'did'],
+['They ___ left before the rain began.',['have','had','were','did'],'had'],
+['I couldn’t get in because I ___ my key.',['forget','forgot','had forgotten','have forgotten'],'had forgotten'],
+['By the time I got there, the bus had ___.',['leave','left','leaving','leaves'],'left'],
+['Had you ___ the book before the test?',['read','reads','reading','reader'],'read']
+],
+[
+['I’m sure you ___ enjoy the concert.',['will','are','did','have'],'will'],
+['Don’t worry, I ___ help you.',['am','will','was','did'],'will'],
+['She thinks they ___ win the match.',['will','are','have','were'],'will'],
+['I promise I ___ tell anyone.',['won’t','am not','didn’t','haven’t'],'won’t'],
+['___ you open the window, please?',['Do','Will','Are','Have'],'Will'],
+['Maybe it ___ be sunny tomorrow.',['will','is','did','has'],'will'],
+['He won’t ___ the answer.',['knows','knew','know','knowing'],'know']
+],
+[
+['Look at those clouds! It ___ rain.',['is going to','will to','going','does'],'is going to'],
+['We are going to ___ a cake.',['made','making','make','makes'],'make'],
+['He ___ going to play tennis.',['am','are','is','be'],'is'],
+['___ they going to travel by train?',['Do','Are','Will','Have'],'Are'],
+['I’m not going to ___ late.',['be','am','is','being'],'be'],
+['They are ___ to move house next month.',['go','going','went','gone'],'going'],
+['She is going to ___ her room.',['cleans','cleaned','clean','cleaning'],'clean']
+],
+[
+['Every morning, Kate ___ tea, but today she ___ coffee.',['drinks / is drinking','drink / drinks','drank / drank','is drinking / drinks'],'drinks / is drinking'],
+['We ___ the museum last year.',['have visited','visit','visited','are visiting'],'visited'],
+['He ___ his homework yet.',['hasn’t finished','didn’t finished','isn’t finish','haven’t finish'],'hasn’t finished'],
+['While they ___ football, it started to rain.',['played','were playing','are playing','have played'],'were playing'],
+['I think our team ___ win.',['is going','will','did','has'],'will'],
+['By the time she arrived, we ___ dinner.',['finish','finished','had finished','have finished'],'had finished'],
+['Be quiet! The students ___.',['take a test','took a test','are taking a test','has taken a test'],'are taking a test']
+]
+];
+grammarLevels.forEach((level,i)=>{ level.qs.push(...extraGrammarQuestions[i]); });
+let gLevel=0,gq=0,gScore=0,gAnswered=false,gQuizQuestions=[],gTestFinished=false;
+function renderGrammar(){const box=document.getElementById('grammarLevels');if(!box)return;box.innerHTML=grammarLevels.map((g,i)=>`<div class="card level" onclick="openGrammar(${i})"><h2>${g.name}</h2><p class="muted">${g.desc}</p><span class="badge">📚 Lernen</span></div>`).join('');}
+function openGrammar(i){gLevel=i;const box=document.getElementById('grammarStudy');box.style.display='block';box.innerHTML=`<div class="card"><h2>${grammarLevels[i].name}</h2><p>${grammarLevels[i].desc}</p><div class="spick"><b>📝 Spickzettel</b><p>${grammarLevels[i].sheet}</p></div><h3>Arbeitszettel</h3>${grammarLevels[i].qs.map((q,n)=>`<p><b>${n+1}.</b> ${q[0].replace('___','_____')}</p>`).join('')}<button class="btn green" id="startGrammarStudyTestBtn" type="button">🧠 Test durchführen</button></div>`;const b=document.getElementById('startGrammarStudyTestBtn');if(b)b.addEventListener('click',startGrammarTest);}
+function shuffleQuestions(items){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startGrammarTest(){gq=0;gScore=0;gAnswered=false;gTestFinished=false;gQuizQuestions=shuffleQuestions(grammarLevels[gLevel].qs).slice(0,8);showPage('grammarTest');const next=document.querySelector('#grammarTest button[onclick="nextGrammarQuestion()"]');if(next)next.textContent='Antwort prüfen / Nächste Frage';renderGT();}
+function renderGT(){const q=gQuizQuestions[gq];document.getElementById('gtCounter').textContent=`${grammarLevels[gLevel].name} · Frage ${gq+1} von ${gQuizQuestions.length} · Punkte: ${gScore}/${gq}`;document.getElementById('gtQuestion').textContent=q[0];const o=document.getElementById('gtOptions');o.innerHTML='';const f=document.getElementById('gtFeedback');f.className='feedback';f.textContent='';gAnswered=false;shuffleQuestions(q[1]).forEach(x=>{const b=document.createElement('button');b.className='quiz-option';b.textContent=x;b.onclick=()=>answerGT(b,x,q[2]);o.appendChild(b);});}
+function answerGT(btn,x,a){if(gAnswered)return;gAnswered=true;const f=document.getElementById('gtFeedback');if(x===a){btn.classList.add('correct');f.className='feedback correct';f.textContent='✅ Richtig!';gScore++;learned++;}else{btn.classList.add('wrong');f.className='feedback wrong';f.textContent='❌ Richtig wäre: '+a;[...document.getElementById('gtOptions').children].forEach(b=>{if(b.textContent===a)b.classList.add('correct');});}save();}
+function nextGrammarQuestion(){if(gTestFinished)return;if(!gAnswered){const f=document.getElementById('gtFeedback');f.className='feedback wrong';f.textContent='Wähle zuerst eine Antwort aus!';return;}gq++;if(gq>=gQuizQuestions.length){gTestFinished=true;const total=gQuizQuestions.length,pct=Math.round(gScore/total*100);awardTestXP(50);const f=document.getElementById('gtFeedback');f.className='feedback correct';f.innerHTML=`🏁 Level abgeschlossen! <b>${gScore} / ${total} Punkte</b> · ${pct}%<br>⭐ +50 XP für die Prüfung · Rang: ${getRank().name}<br><button class="btn green" onclick="startGrammarTest()" style="margin-top:12px">🔄 Neue Runde mit anderen Fragen</button>`;document.getElementById('gtOptions').innerHTML='';return;}renderGT();}
+
+// Kamera + OCR direkt bei Vokabeln
+const cameraBtn=document.getElementById('cameraBtn');if(cameraBtn)cameraBtn.addEventListener('click',()=>{document.getElementById('cameraBox').style.display='block';document.getElementById('imageInput').click();});
+const img=document.getElementById('imageInput');if(img)img.onchange=()=>{if(img.files[0]){document.getElementById('preview').src=URL.createObjectURL(img.files[0]);document.getElementById('preview').style.display='block';document.getElementById('ocrStatus').textContent='Foto bereit – jetzt „Vokabeln erkennen“ drücken.';}};
+async function runOCR(){const f=document.getElementById('imageInput').files[0];if(!f)return alert('Bitte zuerst ein Foto auswählen.');const st=document.getElementById('ocrStatus');if(typeof Tesseract==='undefined'){st.textContent='❌ Texterkennung konnte nicht geladen werden. Prüfe die Internetverbindung oder tippe den Text unten selbst ein.';return;}st.textContent='🔎 Vokabeln werden erkannt …';try{const r=await Tesseract.recognize(f,'eng',{logger:m=>{if(m.status==='recognizing text')st.textContent='🔎 Erkennung: '+Math.round(m.progress*100)+'%';}});document.getElementById('ocrText').value=r.data.text;st.textContent='✅ Erkennung fertig. Bitte kurz kontrollieren und übernehmen.';}catch(e){console.error(e);st.textContent='❌ Texterkennung fehlgeschlagen. Du kannst den erkannten Text unten auch selbst eintragen.';}}
+function importOCR(){const lines=document.getElementById('ocrText').value.split(/\n/).map(x=>x.trim()).filter(Boolean);let n=0;lines.forEach(x=>{const p=x.split(/\s*(?:→|->|–|—|:|;|\t)\s*/);if(p.length>=2&&p[0]&&p[1]){customVocab.push({de:p[0],en:p.slice(1).join(' ')});n++;}});save();renderVocab();alert(n?`${n} Vokabel(n) wurden übernommen. Bitte die Liste kurz kontrollieren.`:'Keine eindeutigen Deutsch–Englisch-Paare erkannt. Beispiel: Haus – house');}
+
+// Gemischter Test: Vokabeln + Grammatik, 100 XP pro abgeschlossener Prüfung
+let mixedList=[],mixedIndex=0,mixedScore=0,mixedAnswered=false;
+function startMixedTest(){const vocabSource=customVocab.length?customVocab:starterVocab;const vocab=vocabSource.map(v=>({type:'vocab',q:v.de,answer:v.en})).sort(()=>Math.random()-.5).slice(0,5);const grammar=grammarLevels.flatMap(g=>g.qs.map(q=>({type:'grammar',q:q[0],options:q[1],answer:q[2]}))).sort(()=>Math.random()-.5).slice(0,5);mixedList=[...vocab,...grammar].sort(()=>Math.random()-.5);mixedIndex=0;mixedScore=0;mixedAnswered=false;document.getElementById('mixedIntro').style.display='none';document.getElementById('mixedTestBox').style.display='block';document.getElementById('nextMixedBtn').style.display='inline-block';renderMixed();}
+function renderMixed(){const item=mixedList[mixedIndex];document.getElementById('mixedCounter').textContent=`Frage ${mixedIndex+1} von ${mixedList.length} · Punkte: ${mixedScore}/${mixedIndex}`;document.getElementById('mixedQuestion').textContent=item.type==='vocab'?'🇩🇪 '+item.q:item.q;const opt=document.getElementById('mixedOptions');opt.innerHTML='';const input=document.getElementById('mixedAnswer');input.style.display='none';input.disabled=false;input.value='';mixedAnswered=false;const f=document.getElementById('mixedFeedback');f.className='feedback';f.textContent='';if(item.type==='vocab'){input.style.display='block';input.focus();return;}item.options.forEach(x=>{const b=document.createElement('button');b.className='quiz-option';b.textContent=x;b.onclick=()=>answerMixed(b,x,item.answer);opt.appendChild(b);});}
+function answerMixed(btn,x,a){if(mixedAnswered)return;mixedAnswered=true;const f=document.getElementById('mixedFeedback');if(normalize(x)===normalize(a)){mixedScore++;btn.classList.add('correct');f.className='feedback correct';f.textContent='✅ Richtig!';}else{btn.classList.add('wrong');f.className='feedback wrong';f.textContent='❌ Lösung: '+a;[...document.getElementById('mixedOptions').children].forEach(b=>{if(b.textContent===a)b.classList.add('correct');});}}
+function checkMixedVocab(){if(mixedAnswered)return;mixedAnswered=true;const item=mixedList[mixedIndex],given=normalize(document.getElementById('mixedAnswer').value),f=document.getElementById('mixedFeedback');if(item.answer.split(',').map(normalize).includes(given)){mixedScore++;f.className='feedback correct';f.textContent='✅ Richtig!';}else{f.className='feedback wrong';f.textContent='❌ Lösung: '+item.answer;}document.getElementById('mixedAnswer').disabled=true;}
+function nextMixed(){const item=mixedList[mixedIndex];if(item.type==='vocab'&&!mixedAnswered){checkMixedVocab();return;}if(item.type==='grammar'&&!mixedAnswered)return;mixedIndex++;if(mixedIndex>=mixedList.length){awardTestXP(100);const f=document.getElementById('mixedFeedback');f.className='feedback correct';f.innerHTML=`🏁 Gemischte Prüfung fertig! <b>${mixedScore} / ${mixedList.length} Punkte</b> · ${Math.round(mixedScore/mixedList.length*100)}%<br>🔥 +100 XP für den gemischten Test · Rang: ${getRank().name}`;document.getElementById('nextMixedBtn').style.display='none';return;}renderMixed();}
+document.getElementById('startMixedBtn').addEventListener('click',()=>{try{startMixedTest();}catch(e){console.error(e);alert('Der gemischte Test konnte nicht starten: '+e.message);}});document.getElementById('nextMixedBtn').addEventListener('click',nextMixed);document.getElementById('mixedAnswer').addEventListener('keydown',e=>{if(e.key==='Enter')nextMixed();});
+document.getElementById('startVocabTestBtn').addEventListener('click',()=>{try{startVocabTest();}catch(e){console.error(e);alert('Der Vokabeltest konnte nicht gestartet werden: '+e.message);}});
+document.getElementById('startGrammarTestBtn').addEventListener('click',()=>{try{startGrammarTest();}catch(e){console.error(e);alert('Der Grammatiktest konnte nicht gestartet werden: '+e.message);}});
+window.addEventListener('error',e=>console.error('Website-Fehler:',e.message,e.filename,e.lineno));
+
+// Tests und Navigation
+function showPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const target=document.getElementById(page);if(target)target.classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));if(page==='vocab')renderVocab();if(page==='grammar')renderGrammar();if(page==='quiz'){document.getElementById('mixedIntro').style.display='block';document.getElementById('mixedTestBox').style.display='none';}window.scrollTo({top:0,behavior:'smooth'});}
+function updateStats(){
+  const words=document.getElementById("homeWords");
+  const learnedEl=document.getElementById("homeLearned");
+  const pointsEl=document.getElementById("homePoints");
+  if(words) words.textContent=customVocab.length;
+  if(learnedEl) learnedEl.textContent=learned;
+  if(pointsEl) pointsEl.textContent=points;
+  if(typeof updateRankUI === "function") updateRankUI();
+}
+updateStats();renderVocab();renderGrammar();
+
 </script>
 </body>
 </html>
